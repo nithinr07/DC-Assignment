@@ -9,7 +9,7 @@ function [] = channel_modeling()
     G_recv = 4;
     G = G_trans + G_recv;
     d_o = 1;
-    gamma = 3.7;
+    gamma = 3;
     K = 20*log10(lambda/(4*pi*d_o)) + G;
     P_min = -110;
     P_out = zeros(length(d), 1);
@@ -24,7 +24,7 @@ function [] = channel_modeling()
         P_out(i) = outage_probability_analytical(K, gamma, d(i), d_o, P_t, P_min, mu, sigma);
      end
 %      figure(2);
-     semilogy(d, P_out, ':bs');
+     semilogy(d, P_out, );
      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      mu = 1;
      sigma = 9;
@@ -33,13 +33,13 @@ function [] = channel_modeling()
         P_out(i) = outage_probability(K, gamma, d(i), d_o, P_t, P_min, mu, sigma);
      end
      figure(2);
-     semilogy(d, P_out, '-.r*');
+     semilogy(d, P_out);
      hold on;
      P_out = zeros(length(d), 1);
      for i=1:length(d)
         P_out(i) = outage_probability_analytical(K, gamma, d(i), d_o, P_t, P_min, mu, sigma);
      end
-     semilogy(d, P_out, ':bs');
+     semilogy(d, P_out);
      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      mu = 5;
      sigma = 9;
@@ -47,14 +47,14 @@ function [] = channel_modeling()
      for i=1:length(d)
         P_out(i) = outage_probability(K, gamma, d(i), d_o, P_t, P_min, mu, sigma);
      end
-     figure(3);
-     semilogy(d, P_out, '-.r*');
+     figure(2);
+     semilogy(d, P_out);
      hold on;
      P_out = zeros(length(d), 1);
      for i=1:length(d)
         P_out(i) = outage_probability_analytical(K, gamma, d(i), d_o, P_t, P_min, mu, sigma);
      end
-     semilogy(d, P_out, ':bs');
+     semilogy(d, P_out);
      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      mu = 1;
      sigma = 6;
@@ -66,16 +66,21 @@ function [] = channel_modeling()
 end
 
 function [Pr] = received_power(K, gamma, d, d_o, P_t, mu, sigma)
-    Pr = K - (10*gamma*log10(d/d_o)) + normrnd(mu, sigma, 1, 10^6) + P_t;
+    Pr = K - (10*gamma*log10(d/d_o)) + normrnd(mu, sigma) + P_t;
 end
 
 function [P_out] = outage_probability(K, gamma, d, d_o, P_t, P_min, mu, sigma)
-    Pr = received_power(K, gamma, d, d_o, P_t, mu, sigma);
-    count = sum(Pr<P_min);        
+    count = 0;
+    for i = 1:10^6
+        Pr = received_power(K, gamma, d, d_o, P_t, mu, sigma);
+        if Pr<P_min
+            count = count + 1;
+        end
+    end
     P_out = count/10^6;
 end
 
 function [P_out] = outage_probability_analytical(K, gamma, d, d_o, P_t, P_min, mu, sigma)
     x = (P_t + K - (10*gamma*log10(d/d_o)) - P_min - mu) / sigma;
-    P_out = qfunc(x);
+    P_out = 1 - qfunc(-x);
 end
